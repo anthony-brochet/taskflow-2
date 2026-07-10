@@ -1,0 +1,62 @@
+@* Page de confirmation (GET) ; la suppression réelle se fait par le POST
+   DeleteConfirmed. Même patron que Todo/Delete.cshtml.
+   Rappel métier : supprimer une catégorie ne supprime PAS ses tâches (elles
+   passent à "sans catégorie", cf. règle OnDelete SetNull dans AppDbContext). *@
+@model TaskFlow.Models.Category
+
+@{
+    ViewData["Title"] = "Supprimer une catégorie";
+}
+
+<h1 class="h2 mb-4 text-danger">Confirmer la suppression</h1>
+
+<!-- 
+  Alerte de danger :
+  - 'alert-danger' crée le fond rouge clair et le texte rouge foncé.
+  - 'role="alert"' est un attribut d'accessibilité essentiel pour les lecteurs d'écran.
+  - 'shadow-sm' ajoute une très légère ombre pour détacher l'alerte.
+-->
+<div class="alert alert-danger shadow-sm mb-4" role="alert">
+    <div class="fw-bold mb-1">Attention : Action irréversible !</div>
+    Vous allez supprimer définitivement la catégorie : <strong>@Model.Name</strong>.
+</div>
+
+@* Récapitulatif de la catégorie à supprimer *@
+<div class="bg-light rounded p-3 mb-4 border">
+    <!-- 
+      'row' combiné avec 'col-sm-3' et 'col-sm-9' permet d'avoir le label et la valeur 
+      côte à côte sur PC, mais s'empile proprement sur mobile pour une meilleure lisibilité.
+    -->
+    <dl class="row mb-0">
+        <!-- 'text-muted' adoucit la couleur du libellé -->
+        <dt class="col-sm-3 text-muted">Catégorie</dt>
+        <dd class="col-sm-9 fw-semibold">@Model.Name</dd>
+
+        <dt class="col-sm-3 text-muted">Couleur</dt>
+        <dd class="col-sm-9">
+            <div class="d-inline-flex align-items-center gap-2">
+                <span class="d-inline-block rounded-circle border shadow-sm" 
+                      style="width: 20px; height: 20px; background-color: @Model.Color;">
+                </span>
+                <code class="text-dark bg-white px-2 py-0.5 rounded border small">@Model.Color</code>
+            </div>
+        </dd>
+    </dl>
+</div>
+
+@* Formulaire de confirmation *@
+<form asp-action="DeleteConfirmed" method="post">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="Id" />
+
+    <!-- 
+      - 'd-flex' active Flexbox pour aligner les boutons horizontalement.
+      - 'gap-2' crée l'espace parfait de 0.5rem entre les deux boutons.
+      - 'btn-danger' applique la couleur rouge de confirmation destructrice.
+    -->
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+</form>

@@ -1,0 +1,63 @@
+@* Page de CONFIRMATION (servie par le GET Delete). La suppression réelle n'a
+   pas lieu ici : le bouton poste vers l'action [HttpPost] DeleteConfirmed. Ce
+   découpage GET (montrer) / POST (agir) évite qu'un simple lien ou un robot
+   d'indexation ne supprime des données en suivant une URL. *@
+@model TaskFlow.Models.TodoTask
+
+@{
+    ViewData["Title"] = "Supprimer une tâche";
+}
+
+<h1 class="h2 mb-4 text-danger">Confirmer la suppression</h1>
+
+<!-- 
+  Alerte de danger :
+  - 'alert-danger' crée le fond rouge clair et le texte rouge foncé.
+  - 'role="alert"' est un attribut d'accessibilité essentiel pour les lecteurs d'écran.
+  - 'shadow-sm' ajoute une très légère ombre pour détacher l'alerte.
+-->
+<div class="alert alert-danger shadow-sm mb-4" role="alert">
+    <div class="fw-bold mb-1">Attention : Action irréversible !</div>
+    Vous allez supprimer définitivement la tâche : <strong>@Model.Title</strong>.
+</div>
+
+@* Récapitulatif de la tâche à supprimer *@
+<div class="bg-light rounded p-3 mb-4 border">
+    <!-- 
+      'row' combiné avec 'col-sm-3' et 'col-sm-9' permet d'avoir le label et la valeur 
+      côte à côte sur PC, mais s'empile proprement sur mobile pour une meilleure lisibilité.
+    -->
+    <dl class="row mb-0">
+        <!-- 'text-muted' adoucit la couleur du libellé -->
+        <dt class="col-sm-3 text-muted">Titre</dt>
+        <dd class="col-sm-9 fw-semibold">@Model.Title</dd>
+
+        <dt class="col-sm-3 text-muted">Priorité</dt>
+        <dd class="col-sm-9">
+            <span class="badge @(Model.Priority == PriorityLevel.High ? "bg-danger" : Model.Priority == PriorityLevel.Medium ? "bg-warning text-dark" : "bg-success")">
+                @Model.Priority
+            </span>
+        </dd>
+
+        <dt class="col-sm-3 text-muted">Échéance</dt>
+        <dd class="col-sm-9">@Model.DueDate.ToShortDateString()</dd>
+    </dl>
+</div>
+
+@* Poste vers DeleteConfirmed avec l'Id caché : c'est lui qui indique au serveur
+   QUELLE tâche supprimer (HTTP est sans état). *@
+<form asp-action="DeleteConfirmed" method="post">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="Id" />
+
+    <!-- 
+      - 'd-flex' active Flexbox pour aligner les boutons horizontalement.
+      - 'gap-2' crée l'espace parfait de 0.5rem entre les deux boutons.
+      - 'btn-danger' applique la couleur rouge de confirmation destructrice.
+    -->
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+</form>

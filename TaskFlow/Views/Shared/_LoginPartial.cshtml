@@ -1,0 +1,37 @@
+@* Vue partielle affichée dans la barre de navigation (via <partial name="_LoginPartial" />).
+   Elle montre "Connexion / Inscription" ou "Bonjour X / Déconnexion" selon l'état.
+
+   @inject = injection de dépendances DANS une vue (comme dans un contrôleur, mais
+   déclarée ici). On récupère les services Identity pour interroger l'utilisateur courant.
+
+   asp-area / asp-page ciblent des RAZOR PAGES (les écrans Identity), pas des actions
+   MVC : d'où asp-page="/Account/Login" au lieu de asp-controller/asp-action. *@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <div class="d-flex align-items-center gap-2">
+        <span class="navbar-text text-muted small">
+            Bonjour <strong class="text-dark">@UserManager.GetUserName(User),</strong>
+        </span>
+
+        @* La déconnexion se fait en POST (jamais un simple lien GET : un GET serait
+           déclenchable à l'insu de l'utilisateur). @Html.AntiForgeryToken() ajoute le
+           jeton anti-CSRF attendu par le serveur. *@
+        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Todo")" method="post" class="m-0">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                Déconnexion
+            </button>
+        </form>
+    </div>
+}
+else
+{
+    <div class="d-flex gap-2">
+        <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-sm btn-outline-primary">Connexion</a>
+        <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-sm btn-primary">Inscription</a>
+    </div>
+}

@@ -1,0 +1,262 @@
+/* =========================================================================
+   TaskFlow — feuille de style de l'OSSATURE (sidebar + topbar).
+   -------------------------------------------------------------------------
+   IMPORTANT : on ne style ICI que la coquille de l'application (sidebar,
+   topbar, zone de contenu). Les composants internes des pages (boutons,
+   badges, tableaux, formulaires) restent gérés par BOOTSTRAP, déjà chargé
+   dans _Layout. On évite donc volontairement de redéfinir .btn, .badge, etc.
+   pour ne pas entrer en conflit avec Bootstrap dans les vues existantes.
+   Les classes propres à la sidebar sont imbriquées sous .sidebar pour la
+   même raison (ex. Bootstrap possède aussi une classe .nav-item).
+   ========================================================================= */
+
+/* Variables de thème — modifie ces valeurs pour changer l'apparence globale. */
+:root {
+  --bg: #f4f4f2;          /* fond général de la page */
+  --surface: #fff;        /* fond des panneaux (sidebar, topbar) */
+  --border: #e8e8e6;      /* bordures légères */
+  --text: #1a1a1a;        /* texte principal */
+  --muted: #6b6b6b;       /* texte secondaire */
+  --muted2: #9a9a9a;      /* texte très secondaire */
+  --accent: #3b5bdb;      /* couleur d'accentuation (bleu) */
+  --accent-h: #2f4ac4;    /* accent survol */
+  --accent-bg: #eef2ff;   /* accent fond très léger */
+  --red: #dc2626;
+  --radius: 8px;
+}
+
+/* Taille de police fluide (héritée du gabarit d'origine). */
+html {
+  font-size: 14px;
+}
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Focus accessible sur les contrôles interactifs. */
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus,
+.form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html, body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── Ossature : sidebar à gauche + zone principale à droite ─────────────── */
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 230px;
+  min-width: 230px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-brand {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.sidebar-brand .logo {
+  width: 30px;
+  height: 30px;
+  background: var(--accent);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+.sidebar-brand .brand-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+.sidebar-brand .brand-ver {
+  font-size: 10px;
+  color: var(--muted2);
+}
+
+/* Navigation — scopée sous .sidebar pour ne PAS toucher le .nav-item Bootstrap. */
+.sidebar-nav {
+  flex: 1;
+  padding: 8px;
+  overflow-y: auto;
+}
+.sidebar .nav-group {
+  margin-bottom: 20px;
+}
+.sidebar .nav-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted2);
+  padding: 4px 8px 6px;
+}
+.sidebar .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+}
+.sidebar .nav-item:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+.sidebar .nav-item.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+.sidebar .nav-item .icon {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}
+
+/* Zone utilisateur en bas de la sidebar. */
+.sidebar-user {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-user .avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.sidebar-user .user-name {
+  font-size: 13px;
+  font-weight: 500;
+  word-break: break-all;
+}
+.sidebar-user .user-role {
+  font-size: 11px;
+  color: var(--muted2);
+}
+.sidebar-user .logout {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--muted2);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+}
+.sidebar-user .logout:hover {
+  color: var(--red);
+}
+/* Liens Connexion / Inscription (visiteur non authentifié) — amélioration :
+   la sidebar d'origine ne proposait AUCUN accès à la connexion. */
+.sidebar-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+/* ── ZONE PRINCIPALE ────────────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* évite qu'un contenu large ne déforme la sidebar */
+}
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 13px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.topbar-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+.topbar-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+.topbar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.content {
+  padding: 22px 24px;
+  flex: 1;
+}
+
+/* ── Responsive : sous 768px la sidebar passe en bandeau horizontal ──────── */
+@media (max-width: 767.98px) {
+  .app {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-brand {
+    border-bottom: none;
+  }
+  .sidebar-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    width: 100%;
+    order: 3;
+  }
+  .sidebar .nav-group {
+    margin-bottom: 0;
+  }
+  .sidebar .nav-label {
+    display: none; /* on masque les intitulés de section sur mobile */
+  }
+  .sidebar-user {
+    margin-left: auto;
+    border-top: none;
+  }
+}

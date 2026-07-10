@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------------------
+# .gitignore pour un projet ASP.NET Core (.NET)
+#
+# Rappel WinForms -> ASP.NET :
+# Comme en WinForms, on ne versionne JAMAIS les dossiers de compilation
+# (bin/ et obj/) : ils sont régénérés à chaque build par `dotnet build`.
+# On ajoute ici en plus la base SQLite locale et les fichiers macOS.
+# ---------------------------------------------------------------------------
+
+# Résultats de compilation .NET
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+
+# Base de données SQLite locale (données de dev, propres à chaque machine)
+*.db
+*.db-shm
+*.db-wal
+
+# Fichiers uploadés par les utilisateurs (contenu, pas du code)
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+
+# Secrets utilisateur / configuration locale
+appsettings.*.local.json
+
+# Fichiers système macOS
+.DS_Store
+
+# Dossiers IDE
+.vs/
+.vscode/
+.idea/

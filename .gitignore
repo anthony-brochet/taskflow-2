@@ -1,0 +1,33 @@
+# ---------------------------------------------------------------------------
+# .gitignore RACINE de la solution (couvre TaskFlow/ ET TaskFlow.tests/).
+#
+# Rappel WinForms -> ASP.NET : comme en WinForms, on ne versionne jamais les
+# dossiers de build (bin/, obj/). Ils sont régénérés à chaque `dotnet build`.
+# ---------------------------------------------------------------------------
+
+# Résultats de compilation .NET
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+
+# Base de données SQLite locale (données de dev, propres à chaque machine)
+*.db
+*.db-shm
+*.db-wal
+
+# Fichiers uploadés par les utilisateurs (contenu, pas du code)
+TaskFlow/wwwroot/uploads/*
+!TaskFlow/wwwroot/uploads/.gitkeep
+
+# Secrets utilisateur / configuration locale
+appsettings.*.local.json
+
+# Fichiers système macOS
+.DS_Store
+
+# Dossiers IDE
+.vs/
+.vscode/
+.idea/

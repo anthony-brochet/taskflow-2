@@ -1,0 +1,47 @@
+@* Modification d'une catégorie. Comme Todo/Edit.cshtml : formulaire pré-rempli
+   par le Model + champ Id caché indispensable pour retrouver la ligne à l'UPDATE. *@
+@model TaskFlow.Models.Category
+@{
+    ViewData["Title"] = "Modifier une catégorie";
+}
+
+<h1 class="h2 mb-4">Modifier la catégorie</h1>
+
+<div class="card shadow-sm" style="max-width: 800px;">
+    <div class="card-body p-4">
+
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+
+            <!-- ID masqué nécessaire pour la mise à jour en base de données -->
+            <input type="hidden" asp-for="Id" />
+            
+            <!-- Champ : Nom -->
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label fw-semibold"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <!-- Champ : Couleur -->
+            <div class="mb-3">
+                <label asp-for="Color" class="form-label fw-semibold"></label>
+                <input asp-for="Color" type="color" class="form-control form-control-color w-100" id="colorPicker" value="@Model.Color" title="Choisir une couleur pour la tâche" />                
+                <span asp-validation-for="Color" class="text-danger small"></span>
+            </div>
+
+            <!-- Actions : Flexbox avec un espace ('gap-2') entre les boutons -->
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial"); 
+    }
+}

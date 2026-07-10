@@ -1,0 +1,239 @@
+@* Le modèle est une PaginatedList<TodoTask> : elle SE COMPORTE comme une
+   List<TodoTask> (on peut faire @foreach dessus, @Model.Any(), etc.) tout en
+   portant les infos de pagination (PageIndex, TotalPages...). Repères de vue :
+     - liens de navigation  = <a asp-action="..." asp-route-id="@task.Id"> (GET)
+     - actions qui MODIFIENT = <form method="post"> + @Html.AntiForgeryToken()
+       (jamais un simple lien : une suppression ne doit pas passer par un GET). *@
+@model TaskFlow.Helpers.PaginatedList<TaskFlow.Models.TodoTask>
+
+@{
+    ViewData["Title"] = "Mes tâches";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Mes tâches</h1>
+    <a asp-action="Create" class="btn btn-primary">
+        + Créer une tâche
+    </a>
+</div>
+
+@* La barre de filtres est TOUJOURS affichée (hors du if/else) : sinon, un filtre
+   qui ne renvoie aucun résultat ferait disparaître la barre elle-même et
+   l'utilisateur ne pourrait plus la réinitialiser. On ne rend conditionnel que le
+   tableau / l'état "aucune tâche". *@
+<div class="card-body p-4">
+    <h5 class="mb-3 fw-bold">Filtrer les tâches</h5>
+
+    @* method="get" : les filtres partent dans l'URL en query string
+       (?filter=high&categoryId=2...). Ces noms correspondent aux PARAMÈTRES de
+       l'action Index(int? categoryId, string? filter, ...) : le model binding les
+       relie automatiquement. Un GET est bookmarkable/partageable, idéal pour une
+       recherche ; un POST serait pour modifier des données. *@
+    <form method="get" class="d-flex flex-wrap align-items-center gap-2 gap-sm-3">
+        <select name="filter" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            <option value="">Toutes les tâches</option>
+            <option value="inprogress" selected=@(ViewBag.Filter == "inprogress" ? "selected" : null)>Tâches en cours</option>
+            <option value="completed" selected=@(ViewBag.Filter == "completed" ? "selected" : null)>Tâches terminées</option>
+            <option value="high" selected=@(ViewBag.Filter == "high" ? "selected" : null)>Tâches urgentes</option>
+        </select>
+
+        <select name="categoryId" class="form-select form-select-sm w-auto" asp-items="ViewBag.Categories" onchange="this.form.submit()">
+            <option value="">Toutes les catégories</option>
+        </select>
+
+        <div class="position-relative" style="min-width: 200px;">
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control form-control-sm" placeholder="Rechercher..." />
+        </div>
+
+        <button type="submit" class="btn btn-sm btn-secondary">Filtrer</button>
+        <a asp-action="Index" class="btn btn-sm btn-link text-decoration-none text-muted">Réinitialiser</a>
+    </form>
+</div>
+
+@if (!Model.Any())
+{
+    <!-- 'role="alert"' ajouté pour l'accessibilité -->
+    <div class="alert alert-info shadow-sm" role="alert">
+        Aucune tâche ne correspond. Ajustez les filtres ou créez une nouvelle tâche !
+    </div>
+}
+else
+{
+    <!--
+      'table-responsive' : Si le tableau est trop large sur mobile, 
+      cette div parente crée une barre de défilement horizontale au lieu de casser tout le design du site.
+    -->
+    <div class="table-responsive shadow-sm rounded border">
+        <!-- 
+          - 'table-hover' : Effet de survol sur les lignes.
+          - 'align-middle' : Aligne verticalement au centre le texte, les badges et les boutons d'une même ligne.
+          - 'mb-0' : Supprime la marge basse par défaut du tableau pour coller proprement à la bordure de la div.
+        -->
+        <table class="table table-hover align-middle mb-0">
+            <!-- 'table-light' offre un léger contraste pour l'en-tête du tableau -->
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Titre</th>
+                    <th scope="col">Catégorie</th>
+                    <th scope="col">Priorité</th>
+                    <th scope="col">Statut</th>
+                    <th scope="col">Assigné à</th>
+                    <th scope="col">Échéance</th>
+                    <th scope="col">Commentaires</th>
+                    <th scope="col" class="text-end pe-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @* @foreach : boucle C# côté serveur qui génère une ligne <tr> par
+                   tâche. Tout ce bloc est exécuté AVANT l'envoi : le navigateur ne
+                   reçoit que du HTML final, jamais de code C#. *@
+                @foreach (TodoTask task in Model)
+                {
+                    <tr class="@(task.IsCompleted ? "table-success text-muted" : "")">
+                        
+                        <!-- Titre de la tâche -->
+                        <td class="fw-semibold">@task.Title</td>
+
+                        <!-- Catégorie de la tâche -->        
+                        <td>
+                            @if (task.Category != null)
+                            {
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    <span class="rounded-circle" style="width: 10px; height: 10px; background-color: @task.Category.Color;"></span>
+                                    @task.Category.Name
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">--</span>
+                            }
+                        </td>
+                        
+                        <!-- Badge de Priorité -->
+                        <td>
+                            <span class="badge @(task.Priority == PriorityLevel.High ? "bg-danger" : task.Priority == PriorityLevel.Medium ? "bg-warning text-dark" : "bg-success")">
+                                @Html.DisplayFor(model => task.Priority)
+                            </span>
+                        </td>
+                        
+                        <td>
+                            @if (task.IsCompleted)
+                            {
+                                <span class="badge bg-success">Terminée</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-primary">En cours</span>
+                            }
+                        </td>
+
+                        <td>
+                            @* task.AssignedToUser est rempli à la lecture par
+                               .Include(t => t.AssignedToUser) dans le service : plus
+                               de nom "aplati" stocké en base. *@
+                            @if (task.AssignedToUser?.Email is { Length: > 0 } assignedEmail)
+                            {
+                                <span class="badge bg-secondary rounded-circle" title="@assignedEmail">
+                                    @assignedEmail[0].ToString().ToUpper()
+                                </span>
+
+                                <small class="text-muted ms-1">@assignedEmail</small>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">--</span>
+                            }
+                        </td>
+
+                        <td>@task.DueDate.ToShortDateString()</td>
+                        
+                        <td>
+                            @if (task.Comments.Any())
+                            {
+                                <span class="badge bg-secondary">@task.Comments.Count</span>                 
+                            }
+                            else
+                            {
+                                <span class="text text-muted">--</span>
+                            }
+                        </td>
+
+                        <!-- 
+                          Colonne Actions :
+                          - 'text-end' et 'pe-3' : Aligne les boutons à droite de l'écran avec une marge interne 
+                          pour un rendu plus élégant.
+                        -->
+                        <td class="text-end pe-3">
+                            <!-- 'btn-group' ou 'gap-1' avec d-inline-flex permet de lier proprement les boutons 
+                            d'action miniature ('btn-sm') -->
+                            <div class="d-inline-flex gap-1">
+                                <a asp-action="Edit" asp-route-id="@task.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
+                                <a asp-action="Delete" asp-route-id="@task.Id" class="btn btn-sm btn-outline-danger">Supprimer</a>
+                                
+                                @* Changer le statut MODIFIE la base -> formulaire POST
+                                   (avec jeton anti-CSRF), pas un lien. *@
+                                <form asp-action="ToggleCompletion" asp-route-id="@task.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm @(task.IsCompleted ? "btn-success" : "btn-outline-secondary")" 
+                                            title="@(task.IsCompleted ? "Marquer comme en cours" : "Marquer comme terminée")">
+                                        @(task.IsCompleted ? "Réouvrir" : "Terminer")
+                                    </button>
+                                </form>
+
+                                <a asp-action="Details" asp-route-id="@task.Id" class="btn btn-sm btn-outline-secondary">Voir</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="d-flex justify-content-between align-items-center mt-3">
+                <small class="text-muted">
+                    Page @Model.PageIndex sur @Model.TotalPages
+                    (@Model.TotalCount total des tâches)
+                </small>
+
+                @* Chaque lien de page reporte les filtres courants via asp-route-*
+                   (categoryId/filter/search) pour ne pas les perdre en changeant de
+                   page. asp-route-XXX="v" ajoute ?XXX=v à l'URL générée. *@
+                <ul class="pagination pagination-sm mb-0">
+                    <!-- Bouton Précédent -->
+                    <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                        <a class="page-link"
+                        asp-action="Index"
+                        asp-route-pageNumber="@(Model.PageIndex - 1)"
+                        asp-route-categoryId="@ViewBag.CategoryId"
+                        asp-route-filter="@ViewBag.Filter"
+                        asp-route-search="@ViewBag.Search">Précédent</a>
+                    </li>
+
+                    <!-- Pages Numérotées -->
+                    @for(var i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                            <a class="page-link"
+                            asp-action="Index"
+                            asp-route-pageNumber="@i"
+                            asp-route-categoryId="@ViewBag.CategoryId"
+                            asp-route-filter="@ViewBag.Filter"
+                            asp-route-search="@ViewBag.Search">@i</a>
+                        </li>
+                    }
+
+                    <!-- Bouton Suivant -->
+                    <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                        <a class="page-link"
+                        asp-action="Index"
+                        asp-route-pageNumber="@(Model.PageIndex + 1)"
+                        asp-route-categoryId="@ViewBag.CategoryId"
+                        asp-route-filter="@ViewBag.Filter"
+                        asp-route-search="@ViewBag.Search">Suivant</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+}

@@ -1,0 +1,89 @@
+@* @model : type FORTEMENT typé de cette vue. `Model` sera un TodoTask, et tous
+   les tag helpers asp-for="..." ci-dessous s'appuient sur ses propriétés (au lieu
+   de manipuler des chaînes magiques). C'est le pont côté vue avec ton entité C#. *@
+@model TaskFlow.Models.TodoTask
+
+@{
+    ViewData["Title"] = "Créer une tâche";
+}
+
+<h1 class="h2 mb-4">Nouvelle tâche</h1>
+
+<div class="card shadow-sm" style="max-width: 800px;">
+    <div class="card-body p-4">
+
+        @* <form asp-action="Create"> : le tag helper génère l'attribut action="/Todo/Create".
+           Comme on est dans les vues de Todo, asp-controller est implicite. Ce POST
+           tombera sur l'action [HttpPost] Create du TodoController. *@
+        <form asp-action="Create" method="post">
+            @* Jeton anti-CSRF : le pendant de [ValidateAntiForgeryToken] côté action.
+               Sans lui, le POST serait rejeté. *@
+            @Html.AntiForgeryToken()
+
+            @* Récapitule les erreurs de validation "globales" (celles non liées à un
+               champ précis). Les Data Annotations du modèle alimentent tout ça. *@
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="mb-3">
+                @* <label asp-for="Title"> reprend AUTOMATIQUEMENT le [Display(Name="Titre")]
+                   du modèle. <input asp-for="Title"> génère name/id/valeur + les attributs
+                   de validation HTML (required, maxlength) déduits des annotations. *@
+                <label asp-for="Title" class="form-label fw-semibold"></label>
+                <input asp-for="Title" class="form-control" placeholder="Ex: Rédiger le rapport mensuel" />
+                @* <span asp-validation-for="Title"> : reçoit le message d'erreur du champ
+                   Title (côté client via jQuery, et re-vérifié côté serveur). *@
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label fw-semibold"></label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Détails de la tâche..."></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    @* asp-items = source des <option>. Ici on génère la liste à partir
+                       de l'enum PriorityLevel (chaque [Display(Name)] devient un libellé). *@
+                    <label asp-for="Priority" class="form-label fw-semibold"></label>
+                    <select asp-for="Priority" class="form-select" asp-items="Html.GetEnumSelectList<TaskFlow.Models.PriorityLevel>()"></select>
+                </div>
+                <div class="col-md-6">
+                    @* Ici asp-items pointe vers ViewBag.Categories, une SelectList
+                       remplie par le contrôleur (PopulateDropdownsAsync). ViewBag = sac
+                       de données dynamique pour passer à la vue ce qui n'est pas dans le Model. *@
+                    <label asp-for="CategoryId" class="form-label fw-semibold"></label>
+                    <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
+                        <option value="">-- Aucune catégorie --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="AssignedToUserId" class="form-label fw-semibold"></label>
+                    <select asp-for="AssignedToUserId" class="form-select" asp-items="ViewBag.Users">
+                        <option value="">-- Aucune assignation --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="DueDate" class="form-label fw-semibold"></label>
+                    <input asp-for="DueDate" class="form-control" type="date" />
+                    <span asp-validation-for="DueDate" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 pt-2">
+                <button type="submit" class="btn btn-primary">Créer la tâche</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@* @section Scripts { } : remplit le point d'injection @RenderSectionAsync("Scripts")
+   du layout. On y charge le partial de validation jQuery, qui fait apparaître les
+   messages d'erreur SANS recharger la page (validation côté client). *@
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

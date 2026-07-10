@@ -1,0 +1,7 @@
+/* CSS "scopé" du layout (généré dans TaskFlow.styles.css, appliqué uniquement
+   aux éléments rendus par _Layout.cshtml).
+
+   L'ancien contenu (styles navbar/footer du template par défaut) a été retiré :
+   la navigation passe désormais par la sidebar, dont les styles vivent dans
+   wwwroot/css/site.css. Ce fichier est laissé volontairement vide pour l'instant
+   — ajoute ici d'éventuels ajustements propres au layout. */

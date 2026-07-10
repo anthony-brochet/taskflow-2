@@ -1,0 +1,175 @@
+@* ================= GABARIT PARTAGÉ (LAYOUT) =================
+   L'ossature HTML commune à toutes les pages. Depuis la refonte, la navigation
+   passe par une SIDEBAR à gauche (au lieu d'une navbar en haut) + une TOPBAR qui
+   affiche le titre de la page. Chaque vue s'insère à @RenderBody().
+
+   Repères Razor utilisés ici :
+     @ViewData["Title"]     -> titre de page, affiché dans la topbar.
+     @ViewData["Subtitle"]  -> sous-titre optionnel sous le titre.
+     @RenderBody()          -> contenu de la vue courante.
+     @RenderSectionAsync("TopbarActions") -> chaque vue peut injecter ses propres
+        boutons dans la topbar (ex. « + Nouvelle tâche »).
+     @RenderSectionAsync("Scripts")       -> scripts optionnels par vue.
+
+   NB : on conserve Bootstrap + Bootstrap Icons pour le CONTENU des pages
+   (boutons, badges, formulaires, alertes) ; la sidebar, elle, est stylée par
+   notre site.css maison. ============================================ *@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TaskFlow</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @* Bootstrap Icons : fournit les pictogrammes <i class="bi bi-..."> utilisés dans les alertes et boutons *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    @* Notre CSS d'ossature (sidebar + topbar) — chargé APRÈS Bootstrap. *@
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/TaskFlow.styles.css" asp-append-version="true" />
+</head>
+<body>
+<div class="app">
+
+    @* ── SIDEBAR ─────────────────────────────────────────────────────────── *@
+    <nav class="sidebar">
+
+        @* Logo + nom de l'app (cliquable -> accueil). *@
+        <a class="sidebar-brand" asp-controller="Home" asp-action="Index">
+            <div class="logo">T</div>
+            <div>
+                <div class="brand-name">TaskFlow</div>
+                <div class="brand-ver">ASP.NET Core 10</div>
+            </div>
+        </a>
+
+        <div class="sidebar-nav">
+            <div class="nav-group">
+                <div class="nav-label">Navigation</div>
+
+                @* La classe "active" est ajoutée selon le contrôleur courant :
+                   ViewContext.RouteData.Values["controller"] = nom du contrôleur actif. *@
+                @{
+                    string? currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+                }
+                <a class="nav-item @(currentController == "Home" ? "active" : "")"
+                   asp-controller="Home" asp-action="Index">
+                    <span class="icon">📊</span> Tableau de bord
+                </a>
+
+                <a class="nav-item @(currentController == "Todo" ? "active" : "")"
+                   asp-controller="Todo" asp-action="Index">
+                    <span class="icon">✅</span> Mes tâches
+                </a>
+
+                <a class="nav-item @(currentController == "Category" ? "active" : "")"
+                   asp-controller="Category" asp-action="Index">
+                    <span class="icon">🏷️</span> Catégories
+                </a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-label">Filtres rapides</div>
+
+                @* asp-route-filter=... passe ?filter=xxx : le nom DOIT correspondre
+                   au paramètre `filter` de TodoController.Index (et non « filtre »),
+                   sinon le filtre est ignoré. Les valeurs (inprogress/completed/high)
+                   correspondent au switch de TaskService. *@
+                <a class="nav-item" asp-controller="Todo" asp-action="Index" asp-route-filter="inprogress">
+                    <span class="icon">🔵</span> En cours
+                </a>
+                <a class="nav-item" asp-controller="Todo" asp-action="Index" asp-route-filter="completed">
+                    <span class="icon">🟢</span> Terminées
+                </a>
+                <a class="nav-item" asp-controller="Todo" asp-action="Index" asp-route-filter="high">
+                    <span class="icon">⚡</span> Priorité haute
+                </a>
+            </div>
+        </div>
+
+        @* Zone utilisateur — en bas de la sidebar. *@
+        <div class="sidebar-user">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @* Initiale de l'email pour l'avatar. On protège contre un nom vide
+                   (?. + fallback "?") pour éviter toute exception de Substring. *@
+                string userName = User.Identity!.Name ?? "";
+                string initial = string.IsNullOrEmpty(userName) ? "?" : userName.Substring(0, 1).ToUpper();
+
+                <div class="avatar">@initial</div>
+                <div class="flex-grow-1" style="min-width:0">
+                    <div class="user-name">@userName</div>
+                    <div class="user-role">Utilisateur</div>
+                </div>
+
+                @* Déconnexion en POST (jamais un GET) + jeton anti-CSRF. *@
+                <form asp-area="Identity" asp-page="/Account/Logout"
+                      asp-route-returnUrl="@Url.Action("Index", "Home")"
+                      method="post" class="m-0 ms-auto">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="logout" title="Déconnexion">⏻</button>
+                </form>
+            }
+            else
+            {
+                @* Amélioration : la sidebar d'origine ne proposait pas de se connecter. *@
+                <div class="sidebar-auth">
+                    <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-sm btn-primary w-100">Connexion</a>
+                    <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-sm btn-outline-primary w-100">Inscription</a>
+                </div>
+            }
+        </div>
+    </nav>
+
+    @* ── CONTENU PRINCIPAL ────────────────────────────────────────────────── *@
+    <div class="main">
+
+        @* Topbar : titre de la page + actions contextuelles injectées par les vues. *@
+        <div class="topbar">
+            <div>
+                <div class="topbar-title">@ViewData["Title"]</div>
+                @if (ViewData["Subtitle"] != null)
+                {
+                    <div class="topbar-sub">@ViewData["Subtitle"]</div>
+                }
+            </div>
+            <div class="topbar-actions">
+                @await RenderSectionAsync("TopbarActions", required: false)
+            </div>
+        </div>
+
+        <div class="content">
+            <main role="main">
+
+                @* Zone de notifications globale. Les contrôleurs posent TempData["..."]
+                   juste avant un RedirectToAction ; le message survit à la redirection
+                   et s'affiche ici, une seule fois. On conserve NOS clés
+                   (SuccessMessage / ErrorMessage) pour ne rien casser côté contrôleurs. *@
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@* Insère la section "Scripts" définie par certaines vues (ex. validation jQuery). *@
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

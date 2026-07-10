@@ -1,0 +1,111 @@
+﻿@* Page d'accueil. Le modèle (DashboardViewModel) porte les compteurs calculés
+   par HomeController. La vue rend DEUX écrans très différents selon que
+   l'utilisateur est connecté ou non : le @if teste User.Identity.IsAuthenticated,
+   propriété disponible dans toute vue via l'objet User (le contexte de sécurité). *@
+@model TaskFlow.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Tableau de bord";
+}
+
+@if (!User.Identity!.IsAuthenticated)
+{
+    @* --- Écran visiteur non connecté : invitation à se connecter --- *@
+    <div class="text-center py-5">
+        <h1>TaskFlow</h1>
+        <!-- 'lead' augmente la taille de la police pour un sous-titre, 'text-muted' adoucit la couleur -->
+        <p class="lead text-muted mb-4">Gérez vos tâches professionnelles simplement.</p>
+        <!-- 'me-2' (margin-end) crée l'espace horizontal entre les deux boutons -->
+        <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary btn-lg me-2">Se connecter</a>
+        <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-secondary btn-lg">Créer un compte</a>
+    </div>
+}
+else
+{
+    @* --- Écran utilisateur connecté : tableau de bord --- *@
+    <h2 class="h4 mb-4">Bonjour @User.Identity.Name,</h2>
+
+    <div class="row row-cols-1 row-cols-md-4 g-3 mb-4 text-center">
+        <!-- Tâches Totales -->
+        <div class="col">
+            <!-- 'border-primary' applique une bordure fine aux couleurs de la charte -->
+            <div class="card border-primary shadow-sm">
+                <div class="card-body">
+                    <!-- 'display-6' offre une typographie grande et moderne sans l'épaisseur d'un <h1> -->
+                    <div class="display-6 fw-bold text-primary">@Model.Total</div>
+                    <div class="text-muted small">Tâches totales</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complétées -->
+        <div class="col">
+            <div class="card border-success shadow-sm">
+                <div class="card-body">
+                    <div class="display-6 fw-bold text-success">@Model.Completed</div>
+                    <div class="text-muted small">Complétées <span class="text-nowrap">(@Model.CompletedPercentage %)</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- En cours -->
+        <div class="col">
+            <div class="card border-warning shadow-sm">
+                <div class="card-body">
+                    <div class="display-6 fw-bold text-warning">@Model.InProgress</div>
+                    <div class="text-muted small">En cours</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- En retard -->
+        <div class="col">
+            <div class="card border-danger shadow-sm">
+                <div class="card-body">
+                    <div class="display-6 fw-bold text-danger">@Model.Late</div>
+                    <div class="text-muted small">En retard</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Tâches prioritaires *@ 
+    <!-- 'd-flex justify-content-between align-items-center' : Aligne le titre à gauche et le bouton à droite sur la même ligne -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="h5 mb-0">Tâches prioritaires</h3>
+        <a asp-controller="Todo" asp-action="Index" class="btn btn-sm btn-outline-primary">Afficher tout</a>
+    </div>
+
+    @if (!Model.TopTasks.Any())
+    {
+        <div class="alert alert-success" role="alert">
+            Toutes les tâches ont été complétées !
+        </div>
+    }
+    else
+    {
+        <div class="list-group shadow-sm">
+            @foreach(TodoTask task in Model.TopTasks)
+            {
+                <!-- 
+                  Lien direct comme élément de liste :
+                  - 'text-decoration-none' et 'text-dark' pour garder le texte propre.
+                -->
+                <a asp-controller="Todo" asp-action="Edit" asp-route-id="@task.Id" 
+                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-decoration-none text-dark">
+                    <div>
+                        <span class="fw-semibold">@task.Title</span>
+                        <small class="text-muted ms-2">
+                            - @task.DueDate.ToShortDateString()
+                        </small>
+                    </div>
+                    <!-- 'text-dark' ajouté pour le badge jaune (warning) afin d'être lisible -->
+                    <span class="badge @(task.Priority == PriorityLevel.High ? "bg-danger" : 
+                    task.Priority == PriorityLevel.Medium ? "bg-warning text-dark" : "bg-success")">
+                        @Html.DisplayFor(model => task.Priority)
+                    </span>
+                </a>
+            }
+        </div>
+    }
+}

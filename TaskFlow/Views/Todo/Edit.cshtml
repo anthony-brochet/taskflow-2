@@ -1,0 +1,82 @@
+@* Vue de modification. Même mécanique de formulaire que Todo/Create.cshtml
+   (asp-for, validation, asp-items) — voir les commentaires détaillés là-bas.
+   Seule vraie nouveauté : le champ Id caché ci-dessous. *@
+@model TaskFlow.Models.TodoTask
+@{
+    ViewData["Title"] = "Modifier une tâche";
+}
+
+<h1 class="h2 mb-4">Modifier la tâche</h1>
+
+<div class="card shadow-sm" style="max-width: 800px;">
+    <div class="card-body p-4">
+
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+
+            @* Id posté en caché : HTTP est SANS ÉTAT, le serveur ne "se souvient"
+               pas de quelle tâche on édite. Cet Id renvoyé permet à l'action POST
+               Edit de retrouver la bonne ligne à mettre à jour. *@
+            <input type="hidden" asp-for="Id" />
+            
+            <!-- Champ : Titre -->
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label fw-semibold"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+
+            <!-- Champ : Description -->
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label fw-semibold"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <!-- Grille responsive pour la Priorité et la Date -->
+            <!-- 'g-3' applique une gouttière (espace) uniforme horizontalement et verticalement -->
+            <div class="row g-4 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Priority" class="form-label fw-semibold"></label>
+                    <select asp-for="Priority" class="form-select" asp-items="Html.GetEnumSelectList<TaskFlow.Models.PriorityLevel>()"></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CategoryId" class="form-label fw-semibold"></label>
+                    <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
+                        <option value="">-- Aucune catégorie --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="AssignedToUserId" class="form-label fw-semibold"></label>
+                    <select asp-for="AssignedToUserId" class="form-select" asp-items="ViewBag.Users">
+                        <option value="">-- Aucune assignation --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="DueDate" class="form-label fw-semibold"></label>
+                    <input asp-for="DueDate" class="form-control" type="date" />
+                    <span asp-validation-for="DueDate" class="text-danger small"></span>
+                </div>
+            </div>
+
+            @* asp-for sur un bool génère une case à cocher + un champ caché
+               associé, pour que "décoché" soit bien transmis comme false. *@
+            <div class="form-check mb-4">
+                <input asp-for="IsCompleted" class="form-check-input" />
+                <label asp-for="IsCompleted" class="form-check-label fw-semibold"></label>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial"); 
+    }
+}

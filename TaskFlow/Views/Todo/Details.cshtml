@@ -1,0 +1,164 @@
+@* Vue de détail d'une tâche + ses commentaires + ses pièces jointes.
+   Particularité intéressante : les formulaires de cette page ciblent D'AUTRES
+   contrôleurs (Comment, Attachment) via asp-controller="..." — une vue n'est pas
+   liée à un seul contrôleur, elle poste où elle veut.
+
+   @inject UserManager : on récupère l'utilisateur courant directement dans la vue
+   pour n'afficher "Supprimer" que sur SES propres commentaires. *@
+@inject Microsoft.AspNetCore.Identity.UserManager<Microsoft.AspNetCore.Identity.IdentityUser> UserManager
+@model TaskFlow.Models.TodoTask
+
+@{
+    ViewData["Title"] = "Détails de la tâche";
+}
+
+@* En-tête : titre de la tâche + catégorie, et bouton Modifier aligné à droite *@
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="h3 mb-1">@Model.Title</h1>
+
+        @if (Model.Category != null)
+        {
+            @* La couleur est validée (code hex) côté modèle : aucun risque d'injection ici *@
+            <span class="badge" style="background:@Model.Category.Color; color:#fff">@Model.Category.Name</span>
+        }
+    </div>
+
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-pencil me-1"></i>Modifier
+    </a>
+</div>
+
+@* Fiche détaillée de la tâche dans une carte Bootstrap *@
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 text-muted">Description</dt>
+            <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.Description) ? "-" : Model.Description)</dd>
+
+            <dt class="col-sm-3 text-muted">Priorité</dt>
+            <dd class="col-sm-9">
+                <span class="badge @(Model.Priority == PriorityLevel.High ? "bg-danger" : Model.Priority == PriorityLevel.Medium ? "bg-warning text-dark" : "bg-success")">
+                    @Html.DisplayFor(m => m.Priority)
+                </span>
+            </dd>
+
+            <dt class="col-sm-3 text-muted">Date d'échéance</dt>
+            <dd class="col-sm-9">@Model.DueDate.ToShortDateString()</dd>
+
+            <dt class="col-sm-3 text-muted">Statut</dt>
+            <dd class="col-sm-9">
+                @if (Model.IsCompleted)
+                {
+                    <span class="badge bg-success">Terminée</span>
+                }
+                else
+                {
+                    <span class="badge bg-primary">En cours</span>
+                }
+            </dd>
+        </dl>
+    </div>
+</div>
+
+@* ============================ COMMENTAIRES ============================ *@
+<h4 class="h5 mb-3"><i class="bi bi-chat-left-text me-2"></i>Commentaires (@Model.Comments.Count)</h4>
+
+<form asp-controller="Comment" asp-action="Add" method="post" class="mb-4">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="TaskId" value="@Model.Id" />
+
+    <div class="input-group">
+        <textarea name="Content" class="form-control" rows="2" placeholder="Ajouter un commentaire..."></textarea>
+        <button type="submit" class="btn btn-primary">Poster</button>
+    </div>
+</form>
+
+@if (!Model.Comments.Any())
+{
+    <p class="text-muted">Aucun commentaire pour le moment, soyez le premier !</p>
+}
+else
+{
+    foreach (var comment in Model.Comments)
+    {
+        <div class="card mb-2">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted fw-medium">
+                        @* Date stockée en UTC -> convertie en heure locale pour l'affichage *@
+                        @comment.UserName &middot; @comment.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    </small>
+
+                    @* Bouton de suppression visible uniquement par l'auteur du commentaire *@
+                    @if (comment.UserId == UserManager.GetUserId(User))
+                    {
+                        <form asp-controller="Comment" asp-action="Delete" asp-route-id="@comment.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-link btn-sm text-danger p-0"
+                                    onclick="return confirm('Supprimer ce commentaire ?')">
+                                Supprimer
+                            </button>
+                        </form>
+                    }
+                </div>
+                <p class="mb-0 mt-1">@comment.Content</p>
+            </div>
+        </div>
+    }
+}
+
+<hr class="my-4" />
+
+@* ============================ PIÈCES JOINTES ============================ *@
+@* Cette section était auparavant imbriquée DANS le "else" des commentaires :
+   elle disparaissait donc quand une tâche n'avait aucun commentaire. Elle est
+   désormais au premier niveau, toujours affichée. *@
+<h4 class="h5 mb-3"><i class="bi bi-paperclip me-2"></i>Pièces jointes (@Model.Attachments.Count)</h4>
+
+<form asp-controller="Attachment" asp-action="Upload" method="post" enctype="multipart/form-data" class="mb-4">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="TaskId" value="@Model.Id" />
+
+    <div class="input-group">
+        <input type="file" name="file" class="form-control"
+               accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpeg,.jpg,.txt" />
+        <button type="submit" class="btn btn-primary">Envoyer</button>
+    </div>
+    <div class="form-text">Formats acceptés : PDF, Word, Excel, images, texte. Taille max : 10 Mo.</div>
+</form>
+
+@if (!Model.Attachments.Any())
+{
+    <p class="text-muted">Aucune pièce jointe.</p>
+}
+else
+{
+    foreach (var attachment in Model.Attachments)
+    {
+        <div class="card mb-2">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark"></i>
+                    <a asp-controller="Attachment" asp-action="Download" asp-route-id="@attachment.Id">
+                        @attachment.OriginalName
+                    </a>
+                    <small class="text-muted">(@((attachment.Size / 1024.0).ToString("F1")) Ko)</small>
+
+                    <form asp-controller="Attachment" asp-action="Delete" asp-route-id="@attachment.Id"
+                          method="post" class="ms-auto">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-link btn-sm text-danger p-0"
+                                onclick="return confirm('Voulez-vous supprimer ce fichier ?')">
+                            Supprimer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<a asp-action="Index" class="btn btn-outline-secondary btn-sm mt-3">
+    <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+</a>

@@ -1,0 +1,57 @@
+@* Formulaire de création d'une catégorie. Mêmes tag helpers que Todo/Create.cshtml
+   (asp-for, asp-validation-for, section Scripts) — voir les commentaires détaillés
+   là-bas. Nouveauté : le champ Color rendu via <input type="color">. *@
+@model TaskFlow.Models.Category
+
+@{
+    ViewData["Title"] = "Créer une catégorie";
+}
+
+<h1 class="h2 mb-4">Nouvelle catégorie</h1>
+
+<div class="card shadow-sm" style="max-width: 800px;">
+    <div class="card-body p-4">
+        
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <!-- 'asp-validation-summary' stylisé en alerte Bootstrap si des erreurs globales surviennent -->
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <!-- Champ : Nom -->
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label fw-semibold"></label>
+                <!-- 'form-control' stylise l'input (bords arrondis, focus bleu, 100% de largeur) -->
+                <input asp-for="Name" class="form-control" placeholder="Ex: Urgent" />
+                <!-- 'text-danger' pour la couleur rouge et 'small' pour une police légèrement plus petite -->
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <!-- Champ : Couleur -->
+            <div class="mb-3">
+                <label asp-for="Color" class="form-label fw-semibold"></label>
+                @* asp-for lie automatiquement la valeur du modèle (couleur par défaut : #3b5bdb) *@
+                <input asp-for="Color" type="color" class="form-control form-control-color w-100" title="Choisir une couleur pour la catégorie" />
+                <span asp-validation-for="Color" class="text-danger small"></span>
+            </div>
+
+            <!-- 
+              Section Actions :
+              - 'd-flex' active Flexbox.
+              - 'gap-2' crée un espace uniforme de 0.5rem entre le bouton et le lien sans utiliser de margin.
+              - 'pt-2' (padding-top) pour décoller légèrement les boutons du bloc du dessus.
+            -->
+            <div class="d-flex gap-2 pt-2">
+                <button type="submit" class="btn btn-primary">Créer la catégorie</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial"); 
+    }
+}

@@ -1,0 +1,85 @@
+@* Liste des catégories. Ici le modèle est une simple List<Category> (pas de
+   pagination). Mêmes mécanismes de tag helpers que Todo/Index.cshtml. *@
+@model List<TaskFlow.Models.Category>
+
+@{
+    ViewData["Title"] = "Mes catégories";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Mes catégories</h1>
+    <a asp-action="Create" class="btn btn-primary">
+        + Créer une catégorie
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <!-- 'role="alert"' ajouté pour l'accessibilité -->
+    <div class="alert alert-info shadow-sm" role="alert">
+        Aucune catégorie n'a été trouvée. Créez votre première catégorie !
+    </div>
+}
+else 
+{
+    <!-- 
+      'table-responsive' : Si le tableau est trop large sur mobile, 
+      cette div parente crée une barre de défilement horizontale au lieu de casser tout le design du site.
+    -->
+    <div class="table-responsive shadow-sm rounded border">
+        <!-- 
+          - 'table-hover' : Effet de survol sur les lignes.
+          - 'align-middle' : Aligne verticalement au centre le texte, les badges et les boutons d'une même ligne.
+          - 'mb-0' : Supprime la marge basse par défaut du tableau pour coller proprement à la bordure de la div.
+        -->
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Nom</th>
+                    <th scope="col">Couleur</th>
+                    <th scope="col">Tâches</th>
+                    <th scope="col" class="text-end pe-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Category category in Model)
+                {
+                    <tr>
+                        
+                        <!-- Nom de la catégorie -->
+                        <td class="fw-semibold">@category.Name</td>
+                        
+                        <!-- Couleur de la catégorie -->
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="d-inline-block rounded-circle border" 
+                                    style="width: 20px; height: 20px; background-color: @category.Color;">
+                                </span>
+                                <span class="small text-muted">@category.Color</span>
+                            </div>
+                        </td>
+
+                        <!-- Nombre de tâches associées (badge Bootstrap) -->
+                        <td>
+                            <span class="badge rounded-pill bg-secondary">@category.Tasks.Count</span>
+                        </td>
+
+                        <!--
+                          Colonne Actions :
+                          - 'text-end' et 'pe-3' : Aligne les boutons à droite de l'écran avec une marge interne 
+                          pour un rendu plus élégant.
+                        -->
+                        <td class="text-end pe-3">
+                            <!-- 'btn-group' ou 'gap-1' avec d-inline-flex permet de lier proprement les boutons 
+                            d'action miniature ('btn-sm') -->
+                            <div class="d-inline-flex gap-1">
+                                <a asp-action="Edit" asp-route-id="@category.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
+                                <a asp-action="Delete" asp-route-id="@category.Id" class="btn btn-sm btn-outline-danger">Supprimer</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

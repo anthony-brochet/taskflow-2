@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Génère le fichier XML de documentation à partir des commentaires /// .
+         Depuis .NET 9, OpenAPI natif les intègre au document Swagger/Scalar :
+         les <summary> des actions et DTO enrichissent la doc interactive de l'API.
+         NoWarn CS1591 : on n'exige PAS un /// sur chaque membre public (trop verbeux). -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <!-- Référence explicite pour forcer une version CORRIGÉE de Microsoft.OpenApi :
+         la version tirée en transitif (2.0.0) via Microsoft.AspNetCore.OpenApi
+         contient une faille de déni de service (NU1903 / GHSA-v5pm-xwqc-g5wc),
+         corrigée à partir de 2.7.5. Même principe que SQLitePCLRaw plus bas. -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
+    <!-- Fournisseur EF Core PostgreSQL, utilisé UNIQUEMENT en production (Railway).
+         En développement on reste sur SQLite ; c'est la variable d'environnement
+         DATABASE_URL (voir Program.cs) qui décide du fournisseur au démarrage.
+         Aucun impact sur l'architecture : les deux contextes dérivent d'AppDbContext. -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.9">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Scalar.AspNetCore" Version="2.16.11" />
+    <!-- Référence explicite pour forcer une version corrigée de SQLite :
+         la version tirée automatiquement par EF Core (transitive) contenait
+         une faille de sécurité connue (NU1903). On la remplace ici. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
+  </ItemGroup>
+
+</Project>
